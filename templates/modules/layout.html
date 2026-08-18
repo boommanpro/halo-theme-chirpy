@@ -55,13 +55,18 @@
     <div class="row flex-grow-1">
       <main
         aria-label="Main Content"
-        class="col-12 col-lg-11 col-xl-9 col-xxl-10 px-md-4 pb-5"
+        th:class="${layout == 'skill'}
+          ? 'col-12 col-lg-11 col-xl-12 px-md-4 pb-5'
+          : 'col-12 col-lg-11 col-xl-9 col-xxl-10 px-md-4 pb-5'"
         th:switch="${layout}"
       >
         <th:block th:case="Default">
           <th:block th:replace="${content}"/>
         </th:block>
         <th:block th:case="Page">
+          <th:block th:replace="${content}"/>
+        </th:block>
+        <th:block th:case="skill">
           <th:block th:replace="${content}"/>
         </th:block>
         <th:block th:case="*">
@@ -71,11 +76,12 @@
         </th:block>
       </main>
 
-      <!-- panel -->
+      <!-- panel (hidden on the full-width skill layout) -->
       <aside
         aria-label="Panel"
         id="panel-wrapper"
         class="col-xl-3 col-xxl-2 ps-2 text-muted"
+        th:if="${layout != 'skill'}"
       >
         <th:block th:replace="~{modules/panel :: panel(${layout})}"/>
       </aside>

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html
+  th:replace="~{modules/layout :: html (title = 'Skill', content = ~{::content}, layout = 'skill', breadcrumb = ~{::breadcrumb})}"
+  xmlns:th="https://www.thymeleaf.org">
+
+  <th:block th:fragment="breadcrumb">
+    <span>
+      <a href="/">[[#{breadcrumb.home}]]</a>
+    </span>
+    <span>Skill</span>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github.min.css" id="hljs-light">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github-dark.min.css" id="hljs-dark" disabled>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+
+    <style>
+      :root {
+        --skill-accent: var(--link-color, #0056b2);
+        --skill-accent-hover: var(--link-color, #0056b2);
+        --skill-accent-light: var(--sidebar-hover-bg, #e4edf3);
+        --skill-bg: var(--main-bg, #fff);
+        --skill-modal-bg: var(--card-bg, #fff);
+      }
+
+      .skill-container { max-width: 100%; margin: 0; padding: 0; }
+
+      .skill-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--main-border-color, #e9ecef);
+      }
+      .skill-header h1 {
+        font-family: Lato, 'Microsoft Yahei', sans-serif;
+        font-size: 2rem; font-weight: 700;
+        margin: 0 0 0.25rem; color: var(--text-color, #212529);
+      }
+      .skill-header p { margin: 0; color: var(--text-muted-color, #868e96); font-size: 0.875rem; }
+
+      .skill-toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;
+      }
+      .skill-count { font-size: 0.875rem; color: var(--text-muted-color, #868e96); }
+      .skill-count strong { color: var(--text-color, #212529); font-weight: 600; }
+
+      .skill-search {
+        display: flex; align-items: center;
+        background: var(--card-bg, #fff);
+        border: 1px solid var(--main-border-color, #e9ecef);
+        border-radius: 6px;
+        padding: 0.375rem 0.75rem;
+        width: 240px;
+        transition: border-color 0.15s;
+      }
+      .skill-search:focus-within { border-color: var(--skill-accent); }
+      .skill-search input {
+        border: none; outline: none; width: 100%;
+        background: transparent; color: var(--text-color, #212529); font-size: 0.875rem;
+        font-family: inherit;
+      }
+      .skill-search input::placeholder { color: var(--text-muted-color, #868e96); }
+      .skill-search i { color: var(--text-muted-color, #868e96); margin-right: 0.5rem; font-size: 0.8125rem; }
+
+      .skill-cat-bar {
+        display: flex; gap: 0.375rem; margin-bottom: 1rem; flex-wrap: wrap;
+      }
+      .skill-cat-btn {
+        display: inline-flex; align-items: center; gap: 0.375rem;
+        padding: 0.375rem 0.75rem; border-radius: 20px;
+        font-size: 0.8125rem; font-weight: 500;
+        cursor: pointer; border: 1px solid var(--main-border-color, #e9ecef);
+        background: var(--card-bg, #fff); color: var(--text-secondary-color, #495057);
+        transition: all 0.15s; font-family: inherit;
+      }
+      .skill-cat-btn:hover { border-color: var(--skill-accent); color: var(--skill-accent); }
+      .skill-cat-btn.active {
+        background: var(--skill-accent-light); border-color: var(--skill-accent-light);
+        color: var(--skill-accent); font-weight: 600;
+      }
+      .skill-cat-btn .cat-count {
+        font-size: 0.6875rem; padding: 0 0.375rem;
+        background: var(--skill-accent-light); color: var(--skill-accent);
+        border-radius: 10px;
+      }
+      .skill-cat-btn.active .cat-count {
+        background: var(--skill-accent); color: #fff;
+      }
+
+      .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1rem;
+      }
+      .skill-card {
+        background: var(--card-bg, #fff);
+        border: 1px solid var(--main-border-color, #e9ecef);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+        display: flex; align-items: flex-start; gap: 0.875rem;
+      }
+      .skill-card:hover {
+        border-color: var(--skill-accent);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transform: translateY(-1px);
+      }
+      .skill-card-icon {
+        width: 42px; height: 42px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; font-size: 1rem; font-weight: 700; color: #fff;
+        background: var(--skill-accent);
+      }
+      .skill-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.375rem; }
+      .skill-card-title-row {
+        display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+      }
+      .skill-card-title {
+        font-family: Lato, 'Microsoft Yahei', sans-serif;
+        font-size: 0.9375rem; font-weight: 600; color: var(--text-color, #212529);
+      }
+      .skill-card-badges { display: flex; gap: 0.3125rem; flex-wrap: wrap; }
+      .badge-tag {
+        display: inline-flex; align-items: center;
+        padding: 0 0.4375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 500;
+      }
+      .badge-category { background: var(--skill-accent-light); color: var(--skill-accent); }
+      .badge-type { background: var(--main-border-color, #e9ecef); color: var(--text-secondary-color, #495057); }
+      .skill-card-summary {
+        color: var(--text-secondary-color, #495057); font-size: 0.8125rem; line-height: 1.5;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .skill-card-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: 0.25rem;
+      }
+      .skill-card-stats { display: flex; gap: 0.75rem; font-size: 0.75rem; color: var(--text-muted-color, #868e96); }
+      .skill-card-stats i { margin-right: 0.1875rem; }
+      .skill-card-action { color: var(--skill-accent); font-size: 0.75rem; font-weight: 500; }
+
+      .detail-header {
+        display: flex; align-items: flex-start; gap: 1.25rem;
+        margin-bottom: 1.5rem; padding: 1.5rem;
+        background: var(--card-bg, #fff); border: 1px solid var(--main-border-color, #e9ecef); border-radius: 8px;
+      }
+      .detail-icon {
+        width: 52px; height: 52px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem; font-weight: 700; color: #fff; flex-shrink: 0;
+      }
+      .detail-info { flex: 1; min-width: 0; }
+      .detail-title-row {
+        display: flex; align-items: center; gap: 0.625rem;
+        margin-bottom: 0.5rem; flex-wrap: wrap;
+      }
+      .detail-title { font-family: Lato, 'Microsoft Yahei', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--text-color, #212529); margin: 0; }
+      .detail-version {
+        padding: 0.125rem 0.5rem; background: var(--main-border-color, #e9ecef); border-radius: 4px;
+        font-size: 0.75rem; font-weight: 600; color: var(--text-secondary-color, #495057);
+        font-family: ui-monospace, monospace;
+      }
+      .detail-badges { display: flex; gap: 0.375rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+      .detail-summary { color: var(--text-secondary-color, #495057); font-size: 0.875rem; margin-bottom: 0.75rem; }
+      .detail-stats {
+        display: flex; gap: 1.5rem; padding-top: 0.75rem;
+        border-top: 1px solid var(--main-border-color, #e9ecef); flex-wrap: wrap;
+      }
+      .detail-stat { display: flex; align-items: center; gap: 0.375rem; color: var(--text-secondary-color, #495057); font-size: 0.8125rem; }
+      .detail-stat strong { color: var(--text-color, #212529); font-weight: 600; }
+
+      /* Markdown reuses the theme's native .content rendering */
+      .skill-md.content {
+        margin-top: 1.5rem;
+        font-size: 1.08rem;
+        overflow-wrap: break-word;
+      }
+
+      .back-btn {
+        display: inline-flex; align-items: center; gap: 0.375rem;
+        padding: 0.375rem 0.75rem; border-radius: 6px;
+        color: var(--text-secondary-color, #495057); text-decoration: none;
+        font-size: 0.8125rem; font-weight: 500; margin-bottom: 1rem;
+        transition: all 0.15s; cursor: pointer; border: none; background: transparent;
+        font-family: inherit;
+      }
+      .back-btn:hover { background: var(--main-border-color, #e9ecef); color: var(--text-color, #212529); }
+
+      /* Download / install-command actions live inside the detail header card */
+      .detail-actions {
+        display: flex; gap: 0.625rem; flex-wrap: wrap;
+        margin-top: 1rem; padding-top: 1rem;
+        border-top: 1px solid var(--main-border-color, #e9ecef);
+      }
+      .action-btn {
+        display: inline-flex; align-items: center; gap: 0.375rem;
+        padding: 0.375rem 0.875rem; border-radius: 6px; font-size: 0.8125rem; font-weight: 500;
+        cursor: pointer; border: 1px solid var(--btn-border-color, #e9ecef);
+        background: var(--button-bg, #fff); color: var(--text-color, #212529);
+        transition: all 0.15s; text-decoration: none;
+        font-family: inherit;
+      }
+      .action-btn:hover { background: var(--main-border-color, #e9ecef); }
+      .action-btn.primary { background: var(--skill-accent); color: #fff; border-color: var(--skill-accent); }
+      .action-btn.primary:hover { filter: brightness(0.95); }
+
+      .loading-state, .empty-state {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 3.75rem 1.25rem; color: var(--text-secondary-color, #495057);
+      }
+      .loading-state i, .empty-state i { font-size: 2.25rem; margin-bottom: 1rem; color: var(--text-muted-color, #868e96); }
+      .empty-state h3 { color: var(--text-color, #212529); font-size: 1rem; margin-bottom: 0.375rem; }
+      .spinner {
+        width: 1.875rem; height: 1.875rem;
+        border: 3px solid var(--main-border-color, #e9ecef); border-top-color: var(--skill-accent);
+        border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 1rem;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .toast {
+        position: fixed; bottom: 1.5rem; left: 50%;
+        transform: translateX(-50%) translateY(1.25rem);
+        background: var(--text-color, #212529); color: var(--bg-body, #f8f9fa);
+        padding: 0.625rem 1.25rem; border-radius: 6px; font-size: 0.8125rem; font-weight: 500;
+        box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.15);
+        opacity: 0; transition: opacity 0.2s, transform 0.2s;
+        pointer-events: none; z-index: 200;
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      .hub-browser {
+        display: grid; grid-template-columns: 260px 1fr; gap: 0;
+        border: 1px solid var(--main-border-color, #e9ecef); border-radius: 8px; overflow: hidden;
+        min-height: 480px; background: var(--card-bg, #fff);
+      }
+      .hub-filetree {
+        background: var(--card-bg, #fff); color: var(--text-secondary-color, #495057);
+        border-right: 1px solid var(--main-border-color, #e9ecef);
+        display: flex; flex-direction: column;
+      }
+      .hub-tree-title {
+        padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted-color, #868e96);
+        border-bottom: 1px solid var(--main-border-color, #e9ecef); flex-shrink: 0;
+      }
+      .hub-tree {
+        padding: 6px 0; overflow-y: auto; flex: 1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px;
+        max-height: 600px;
+      }
+      .hub-tree-node {
+        display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+        background: none; border: none; color: var(--text-secondary-color, #495057);
+        padding: 3px 10px; cursor: pointer; font: inherit; white-space: nowrap;
+      }
+      .hub-tree-node:hover { background: var(--main-border-color, #e9ecef); }
+      .hub-tree-dir-node { color: var(--text-color, #212529); font-weight: 600; }
+      .hub-tree-file.active { background: var(--skill-accent-light, #e8f0fe); color: var(--skill-accent, #0566d7); }
+      .hub-tree-caret { width: 12px; font-size: 10px; transition: transform 0.12s; transform: rotate(0deg); }
+      .hub-tree-dir-node.open .hub-tree-caret { transform: rotate(90deg); }
+      .hub-tree-children { display: none; }
+      .hub-tree-children.open { display: block; }
+      .hub-filetree .fa-folder { color: var(--skill-accent, #0566d7); }
+      .hub-filetree .fa-folder-open { color: var(--skill-accent, #0566d7); }
+      .hub-tree-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .hub-tree-size { font-size: 11px; color: var(--text-muted-color, #868e96); margin-left: 8px; flex-shrink: 0; }
+      .hub-tree-count { color: var(--skill-accent, #0566d7); }
+      .hub-viewer {
+        background: var(--card-bg, #fff); color: var(--text-color, #212529);
+        overflow: auto; min-height: 480px; max-height: 640px;
+      }
+      .hub-md { background: var(--card-bg, #fff); color: var(--text-color, #212529); padding: 24px; min-height: 480px; }
+      .hub-loading, .hub-empty {
+        display: flex; align-items: center; justify-content: center;
+        color: var(--text-muted-color, #868e96); padding: 40px; font-size: 13px; min-height: 200px;
+      }
+      .hub-img { padding: 16px; text-align: center; }
+      .hub-img img { max-width: 100%; }
+      .hub-code { display: flex; flex-direction: column; min-height: 480px; }
+      .hub-code-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 14px; background: var(--main-border-color, #e9ecef);
+        border-bottom: 1px solid var(--main-border-color, #e9ecef);
+        color: var(--text-color, #212529); font-size: 12px;
+      }
+      .hub-code-title { display: flex; align-items: center; gap: 8px; }
+      .hub-copy-btn {
+        background: var(--card-bg, #fff); border: 1px solid var(--main-border-color, #d1d5db);
+        color: var(--text-secondary-color, #495057);
+        border-radius: 4px; padding: 2px 10px; font-size: 12px; cursor: pointer;
+      }
+      .hub-copy-btn:hover { background: var(--main-border-color, #e9ecef); }
+      .hub-code-body { padding: 14px; overflow: auto; }
+      .hub-code-body pre { margin: 0; }
+
+      /* Inline code viewer for plain markdown/project skills */
+      .skill-inline-code {
+        margin-top: 1.5rem;
+        border: 1px solid var(--main-border-color, #e9ecef);
+        border-radius: 8px; overflow: hidden;
+        background: var(--card-bg, #fff);
+      }
+      .skill-inline-code .hub-code-header { border-top-left-radius: 8px; border-top-right-radius: 8px; }
+      .inline-file-select {
+        display: block; width: 100%; max-width: 360px; margin-bottom: 12px;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--main-border-color, #e9ecef); border-radius: 4px;
+        background: var(--card-bg, #fff); color: var(--text-color, #212529);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+      }
+
+      @media (max-width: 768px) {
+        .skills-grid { grid-template-columns: 1fr; }
+        .detail-header { flex-direction: column; align-items: flex-start; }
+        .hub-browser { grid-template-columns: 1fr; }
+        .hub-filetree { border-right: none; border-bottom: 1px solid var(--main-border-color, #e9ecef); }
+        .hub-tree { max-height: 260px; }
+        .skill-search { width: 100%; }
+      }
+    </style>
+
+    <div class="skill-container">
+      <div id="skill-root">
+        <div class="loading-state"><div class="spinner"></div><p>加载中...</p></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      marked.setOptions({ breaks: true, gfm: true });
+
+      const API_BASE = '/showcase-api';
+      let allSkills = [];
+      let categories = [];
+      let stats = null;
+      let currentCategory = '';
+      let currentSearch = '';
+
+      const LANG_ICONS = {
+        'markdown':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        'java':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>',
+        'python':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        'javascript':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>',
+        'typescript':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>',
+        'html':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        'css':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        'yaml':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        'json':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        'shell':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
+        'default':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+      };
+
+      function getInitial(name) {
+        if (!name) return '?';
+        const cleaned = name.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+        if (/[\u4e00-\u9fa5]/.test(cleaned)) return cleaned.substring(0, 1);
+        return cleaned.substring(0, 2).toUpperCase();
+      }
+      function getIconColor(name) {
+        if (!name) return 'c1';
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return ['c1','c2','c3','c4','c5','c6','c7','c8'][Math.abs(hash) % 8];
+      }
+      function guessLanguage(path) {
+        if (!path) return '';
+        const ext = path.split('.').pop().toLowerCase();
+        const map = {md:'markdown',java:'java',js:'javascript',ts:'typescript',jsx:'javascript',tsx:'typescript',py:'python',html:'html',css:'css',json:'json',xml:'xml',yml:'yaml',yaml:'yaml',sh:'shell',sql:'sql',go:'go',rs:'rust',rb:'ruby',php:'php',vue:'html',c:'c',cpp:'cpp',cs:'csharp'};
+        return map[ext] || '';
+      }
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+      function formatNumber(n) {
+        if (n == null) return '0';
+        const num = Number(n);
+        if (num >= 10000) return (num/10000).toFixed(1) + 'w';
+        if (num >= 1000) return (num/1000).toFixed(1) + 'k';
+        return String(num);
+      }
+      function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
+      }
+      function copyText(text) {
+        if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板')); return; }
+        const ta = document.createElement('textarea'); ta.value = text;
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('已复制到剪贴板');
+      }
+
+      async function init() {
+        const root = document.getElementById('skill-root');
+        root.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>加载中...</p></div>';
+        try {
+          const [statsData, catsData, skillsData] = await Promise.all([
+            fetch(API_BASE + '/stats').then(r => r.json()).catch(() => null),
+            fetch(API_BASE + '/categories').then(r => r.json()).catch(() => []),
+            fetch(API_BASE + '/skills').then(r => r.json()).catch(() => [])
+          ]);
+          stats = statsData;
+          categories = catsData || [];
+          allSkills = skillsData || [];
+          // Hash-based routing so all views live under the /skill single page route
+          // (avoids server-side 404 on direct load / refresh of /skill/d/...).
+          handleRoute((window.location.hash || '').replace(/^#/, '') || '/');
+          window.addEventListener('hashchange', () => {
+            const p = (window.location.hash || '').replace(/^#/, '') || '/';
+            handleRoute(p);
+          });
+        } catch (e) {
+          console.error('Init error:', e);
+          root.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h3>加载失败</h3><p>请稍后重试</p></div>';
+        }
+      }
+
+      function updateContent(html) {
+        const root = document.getElementById('skill-root');
+        if (root) {
+          root.innerHTML = html;
+          window.scrollTo(0, 0);
+        }
+      }
+
+      function navigateTo(path, event) {
+        if (event) { event.preventDefault(); event.stopPropagation(); }
+        window.location.hash = path === '/' ? '#/' : '#/' + (path.startsWith('/') ? path.slice(1) : path);
+      }
+
+      function handleRoute(path) {
+        const cleanPath = path.replace(/\/+$/, '') || '/';
+        if (cleanPath === '/') renderSkillList();
+        else if (cleanPath.startsWith('/c/')) renderSkillList(decodeURIComponent(cleanPath.substring(3)));
+        else if (cleanPath.startsWith('/d/')) renderSkillDetail(decodeURIComponent(cleanPath.substring(3)));
+        else renderSkillList();
+      }
+
+      function renderSkillList(categoryFilter) {
+        currentCategory = categoryFilter || '';
+        let skills = currentCategory ? allSkills.filter(s => s.category === currentCategory) : allSkills;
+        const search = currentSearch.toLowerCase();
+        if (search) {
+          skills = skills.filter(s =>
+            (s.displayName && s.displayName.toLowerCase().includes(search)) ||
+            (s.name && s.name.toLowerCase().includes(search)) ||
+            (s.summary && s.summary.toLowerCase().includes(search)) ||
+            (s.tags && s.tags.some(t => t.toLowerCase().includes(search)))
+          );
+        }
+
+        const catLabel = currentCategory ? (categories.find(c => c.name === currentCategory)?.displayName || currentCategory) : '';
+        // 不显示固定的 "Skill 中心" 标题，仅在按分类筛选时显示该分类名
+        const title = currentCategory ? catLabel : '';
+
+        let html = '';
+        if (title) {
+          html += `
+            <div class="skill-header">
+              <h1>${escapeHtml(title)}</h1>
+            </div>`;
+        }
+        html += `
+          <div class="skill-cat-bar">
+            <button class="skill-cat-btn ${!currentCategory ? 'active' : ''}" data-cat="" onclick="filterCategory('', event)">
+              <i class="fas fa-th-large"></i> 全部
+              <span class="cat-count">${allSkills.length}</span>
+            </button>
+            ${categories.map(cat => {
+              const count = allSkills.filter(s => s.category === cat.name).length;
+              return `<button class="skill-cat-btn ${currentCategory === cat.name ? 'active' : ''}" data-cat="${escapeHtml(cat.name)}" onclick="filterCategory('${escapeHtml(cat.name)}', event)">
+                <i class="fas fa-folder"></i> ${escapeHtml(cat.displayName || cat.name)}
+                <span class="cat-count">${count}</span>
+              </button>`;
+            }).join('')}
+          </div>
+        `;
+
+        if (!skills.length) {
+          html += `<div class="empty-state"><i class="fas fa-inbox"></i><h3>${search ? '没有匹配的技能' : '暂无技能'}</h3><p>${search ? '尝试调整搜索条件' : currentCategory ? '该分类下还没有技能' : '管理员还没有发布任何技能'}</p></div>`;
+        } else {
+          html += '<div class="skills-grid">' + skills.map(renderSkillCard).join('') + '</div>';
+        }
+
+        updateContent(html);
+        attachListEvents();
+      }
+
+      function renderSkillCard(s) {
+        let typeLabel = '文档';
+        if (s.sourceType === 'zip') typeLabel = '演示站';
+        else if (s.sourceType === 'external') typeLabel = '外链';
+        else if (s.files && s.files.length > 0) typeLabel = '项目';
+
+        const catBadge = s.categoryName ? `<span class="badge-tag badge-category">${escapeHtml(s.categoryName)}</span>` : '';
+        const version = s.skillVersion || s.version || '';
+
+        return `
+          <div class="skill-card" data-name="${escapeHtml(s.name)}">
+            <div class="skill-card-info">
+              <div class="skill-card-title-row">
+                <div class="skill-card-title">${escapeHtml(s.displayName || s.name)}</div>
+                <div class="skill-card-badges">
+                  ${catBadge}
+                  <span class="badge-tag badge-type">${typeLabel}</span>
+                  ${version ? `<span class="badge-tag badge-type">v${escapeHtml(version)}</span>` : ''}
+                </div>
+              </div>
+              <div class="skill-card-summary">${escapeHtml(s.summary || '暂无描述')}</div>
+              <div class="skill-card-footer">
+                <div class="skill-card-action">查看详情 →</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function filterCategory(cat, event) {
+        if (event) event.preventDefault();
+        navigateTo(cat ? '/c/' + encodeURIComponent(cat) : '/', event);
+      }
+
+      function attachListEvents() {
+        document.querySelectorAll('.skill-card').forEach(card => {
+          card.addEventListener('click', () => navigateTo('/d/' + encodeURIComponent(card.dataset.name)));
+        });
+        const searchInput = document.getElementById('skill-search-input');
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            if (window._searchTimer) clearTimeout(window._searchTimer);
+            window._searchTimer = setTimeout(() => renderSkillList(currentCategory), 200);
+          });
+        }
+      }
+
+      async function renderSkillDetail(skillName) {
+        updateContent('<div class="loading-state"><div class="spinner"></div><p>加载中...</p></div>');
+        try {
+          const skill = await fetch(API_BASE + '/skills/' + encodeURIComponent(skillName)).then(r => r.json());
+          window._currentSkillName = skillName;
+
+          if (skill.sourceType === 'zip') {
+            const isHub = skill.entryFile && skill.entryFile !== 'index.html';
+            const zipUrl = skill.previewUrl || '/showcase/' + encodeURIComponent(skillName) + '/';
+            const versionBadge = skill.skillVersion ? `<span class="detail-version">v${escapeHtml(skill.skillVersion)}</span>` : '';
+            updateContent(`
+              <button class="back-btn" onclick="navigateTo('/', event)"><i class="fas fa-arrow-left"></i> 返回列表</button>
+              <div class="detail-header">
+                <div class="detail-info">
+                  <div class="detail-title-row"><h1 class="detail-title">${escapeHtml(skill.displayName || skillName)}</h1>${versionBadge}</div>
+                  <div class="detail-summary">${escapeHtml(skill.summary || (isHub ? '技能包' : 'ZIP 演示站'))}</div>
+                  <div class="detail-actions">
+                    <button class="action-btn primary" onclick="downloadSkillZip()"><i class="fas fa-download"></i> 下载</button>
+                    <button class="action-btn" onclick="copyInstallCmd()"><i class="fas fa-terminal"></i> 复制安装命令</button>
+                  </div>
+                </div>
+              </div>
+              ${isHub
+                ? `<div class="hub-browser">
+                    <div class="hub-filetree">
+                      <div class="hub-tree-title"><i class="fas fa-folder-open"></i> <span>文件 <span class="hub-tree-count"></span></span></div>
+                      <div class="hub-tree" id="hub-tree"><div class="hub-loading">加载中…</div></div>
+                    </div>
+                    <div class="hub-viewer" id="hub-viewer"><div class="hub-loading">加载中…</div></div>
+                  </div>`
+                : `<iframe src="${zipUrl}" style="width:100%;min-height:640px;border:1px solid var(--main-border-color);border-radius:8px;background:var(--card-bg);"></iframe>`}
+            `);
+            if (isHub) loadSkillHubTree(skill);
+            return;
+          }
+
+          if (skill.sourceType === 'external' && skill.externalUrl) {
+            updateContent(`
+              <button class="back-btn" onclick="navigateTo('/', event)"><i class="fas fa-arrow-left"></i> 返回列表</button>
+              <div class="detail-header">
+                <div class="detail-info">
+                  <div class="detail-title-row"><h1 class="detail-title">${escapeHtml(skill.displayName || skillName)}</h1></div>
+                  <div class="detail-summary">${escapeHtml(skill.summary || '外部链接')}</div>
+                  <div class="detail-actions">
+                    <a class="action-btn primary" href="${escapeHtml(skill.externalUrl)}" target="_blank"><i class="fas fa-external-link-alt"></i> 访问外链</a>
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:center;padding:2.5rem;background:var(--card-bg);border:1px solid var(--main-border-color);border-radius:8px;">
+                <i class="fas fa-link" style="font-size:3rem;color:var(--text-muted-color);margin-bottom:1rem;"></i>
+                <h3 style="color:var(--text-color);margin-bottom:0.5rem;">外部链接</h3>
+                <p style="color:var(--text-secondary-color);margin-bottom:1rem;">此技能指向外部网站</p>
+                <a href="${escapeHtml(skill.externalUrl)}" class="action-btn primary" target="_blank"><i class="fas fa-external-link-alt"></i> 访问</a>
+              </div>
+            `);
+            return;
+          }
+
+          window._currentSkill = skill;
+          window._currentSkillFiles = skill.files || [];
+
+          const skillVersion = skill.skillVersion || skill.version || '';
+
+          let html = `
+            <button class="back-btn" onclick="navigateTo('/', event)"><i class="fas fa-arrow-left"></i> 返回列表</button>
+            <div class="detail-header">
+              <div class="detail-info">
+                <div class="detail-title-row">
+                  <h1 class="detail-title">${escapeHtml(skill.displayName || skillName)}</h1>
+                  ${skillVersion ? `<span class="detail-version">v${escapeHtml(skillVersion)}</span>` : ''}
+                </div>
+                <div class="detail-badges">
+                  ${skill.categoryName ? `<span class="badge-tag badge-category">${escapeHtml(skill.categoryName)}</span>` : ''}
+                  <span class="badge-tag badge-type">${skill.files && skill.files.length > 0 ? '项目' : '文档'}</span>
+                </div>
+                <div class="detail-summary">${escapeHtml(skill.summary || '暂无描述')}</div>
+                <div class="detail-stats">
+                  ${skill.author ? `<div class="detail-stat"><i class="fas fa-user"></i><strong>${escapeHtml(skill.author)}</strong></div>` : ''}
+                </div>
+                <div class="detail-actions">
+                  <button class="action-btn primary" onclick="downloadSkillZip()"><i class="fas fa-download"></i> 下载</button>
+                  <button class="action-btn" onclick="copyInstallCmd()"><i class="fas fa-terminal"></i> 复制安装命令</button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const mdContent = skill.content || (skill.files?.find(f=>f.language==='markdown')?.content) || '';
+          const cfs = (skill.files || []).filter(f => f.language && f.language !== 'markdown');
+          window._currentCodeFiles = cfs;
+
+          // 直接展示 Markdown 内容，复用主题自带的 .content 渲染样式
+          if (mdContent) {
+            let body = '';
+            try { body = marked.parse(mdContent); } catch(e) { body = '<pre>' + escapeHtml(mdContent) + '</pre>'; }
+            html += '<div class="skill-md content">' + body + '</div>';
+          } else if (!cfs.length) {
+            html += '<div class="empty-state" style="padding:2.5rem;"><h3>暂无文档</h3><p>该技能没有提供 README 文档</p></div>';
+          }
+
+          // 附带代码文件内联展示（无标签页，直接铺在正文下方）
+          if (cfs.length) {
+            html += `
+              <div class="skill-inline-code">
+                <div class="hub-code-header">
+                  <span class="hub-code-title"><i class="fas fa-code"></i> <span>代码文件</span></span>
+                  <button class="hub-copy-btn" type="button" onclick="copyCurrentCode()"><i class="far fa-copy"></i> 复制</button>
+                </div>
+                <div class="hub-code-body">
+                  <select id="inline-file-select" class="inline-file-select">${cfs.map((f,idx)=>`<option value="${idx}" ${idx===0?'selected':''}>${escapeHtml(f.path)}</option>`).join('')}</select>
+                  <pre><code id="inline-code" class="language-"></code></pre>
+                </div>
+              </div>`;
+          }
+
+          updateContent(html);
+
+          if (window.hljs && mdContent) document.querySelectorAll('.skill-md pre code').forEach(b => hljs.highlightElement(b));
+
+          if (cfs.length) {
+            renderCodeFile(0);
+            const sel = document.getElementById('inline-file-select');
+            if (sel) sel.addEventListener('change', () => renderCodeFile(parseInt(sel.value)));
+          }
+        } catch (e) {
+          console.error('Detail error:', e);
+          updateContent('<button class="back-btn" onclick="navigateTo(\'/\', event)"><i class="fas fa-arrow-left"></i> 返回列表</button><div class="empty-state"><i class="fas fa-exclamation-circle"></i><h3>加载失败</h3><p>Skill 不存在或已被删除</p></div>');
+        }
+      }
+
+      function renderCodeFile(idx) {
+        const codeFiles = window._currentCodeFiles || [];
+        if (!codeFiles || !codeFiles[idx]) return;
+        const f = codeFiles[idx];
+        const code = f.content || '';
+        const fnEl = document.getElementById('inline-file-select');
+        const codeEl = document.getElementById('inline-code');
+        if (fnEl) {
+          const opt = fnEl.querySelector('option[value="' + idx + '"]');
+          fnEl.value = String(idx);
+          if (opt) opt.textContent = f.path || f.name;
+        }
+        if (codeEl) {
+          codeEl.textContent = code;
+          codeEl.className = 'language-' + escapeHtml(f.language || guessLanguage(f.path) || '');
+          if (window.hljs) hljs.highlightElement(codeEl);
+        }
+        window._currentCode = code;
+      }
+
+      function copyCurrentCode() {
+        if (window._currentCode) copyText(window._currentCode);
+      }
+
+      function downloadUrl() {
+        return API_BASE + '/skills/' + encodeURIComponent(window._currentSkillName) + '/download';
+      }
+
+      // Download the skill package from this site's real download endpoint.
+      function downloadSkillZip() {
+        const a = document.createElement('a');
+        a.href = downloadUrl();
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+      // Generate an install command that downloads the package from this site's
+      // download endpoint and unpacks it, adapted to the visitor's OS.
+      function buildInstallCmd() {
+        const url = new URL(downloadUrl(), location.origin).toString();
+        const safeName = encodeURIComponent(window._currentSkillName);
+        const win = /win/i.test(navigator.platform) || /windows/i.test(navigator.userAgent);
+        const mac = /mac|iphone|ipad/i.test(navigator.platform);
+        if (win) {
+          return {
+            os: 'powershell',
+            cmd: `$dir = Join-Path $env:USERPROFILE '.halo\\skills'; New-Item -ItemType Directory -Force -Path $dir | Out-Null; Invoke-WebRequest -Uri '${url}' -OutFile (Join-Path $dir '${safeName}.zip'); Expand-Archive -Path (Join-Path $dir '${safeName}.zip') -DestinationPath (Join-Path $dir '${safeName}') -Force`
+          };
+        }
+        return {
+          os: mac ? 'macOS / bash' : 'Linux / bash',
+          cmd: `mkdir -p "$HOME/.halo/skills" && curl -fsSL '${url}' -o "$HOME/.halo/skills/${safeName}.zip" && unzip -o "$HOME/.halo/skills/${safeName}.zip" -d "$HOME/.halo/skills/${safeName}"`
+        };
+      }
+
+      function copyInstallCmd() {
+        copyText(buildInstallCmd().cmd);
+      }
+
+      // ----- skillhub-style VSCode file browser -----
+
+      function skillHubFileUrl(path) {
+        return '/showcase/' + encodeURIComponent(window._currentSkillName) + '/' +
+          path.split('/').map(encodeURIComponent).join('/');
+      }
+
+      function escapeHtmlAttr(str) {
+        return escapeHtml(str).replace(/"/g, '&quot;');
+      }
+
+      function hubFileIcon(lang) {
+        const m = {markdown:'fa-file-alt', json:'fa-code', javascript:'fa-code', typescript:'fa-code', html:'fa-code', css:'fa-code', yaml:'fa-file', shell:'fa-terminal', python:'fa-code', java:'fa-code', default:'fa-file'};
+        return 'fas ' + (m[lang] || m.default);
+      }
+
+      function countFiles(nodes) {
+        let c = 0;
+        (nodes || []).forEach(n => {
+          if (n.type === 'file') c++;
+          if (n.children) c += countFiles(n.children);
+        });
+        return c;
+      }
+
+      function renderHubTree(nodes) {
+        return (nodes || []).map(n => {
+          if (n.type === 'dir') {
+            return `<div class="hub-tree-dir">
+              <button type="button" class="hub-tree-node hub-tree-dir-node" data-path="${escapeHtmlAttr(n.path)}">
+                <i class="fas fa-caret-right hub-tree-caret"></i><i class="fas fa-folder"></i>
+                <span class="hub-tree-name">${escapeHtml(n.name)}</span>
+              </button>
+              <div class="hub-tree-children">${renderHubTree(n.children)}</div>
+            </div>`;
+          }
+          return `<button type="button" class="hub-tree-node hub-tree-file" data-path="${escapeHtmlAttr(n.path)}">
+            <i class="${hubFileIcon(n.language)}"></i><span class="hub-tree-name">${escapeHtml(n.name)}</span>
+            ${n.size ? `<span class="hub-tree-size">${formatNumber(n.size)}</span>` : ''}
+          </button>`;
+        }).join('');
+      }
+
+      async function loadSkillHubTree(skill) {
+        const root = document.getElementById('hub-tree');
+        if (!root) return;
+        try {
+          const resp = await fetch(API_BASE + '/skills/' + encodeURIComponent(window._currentSkillName) + '/tree');
+          if (!resp.ok) throw new Error(resp.status);
+          const tree = await resp.json();
+          const countEl = document.querySelector('.hub-tree-count');
+          if (countEl) countEl.textContent = '(' + countFiles(tree) + ' 个文件)';
+          root.innerHTML = renderHubTree(tree);
+
+          root.addEventListener('click', (e) => {
+            const node = e.target.closest('.hub-tree-node');
+            if (!node) return;
+            const path = node.dataset.path;
+            if (node.classList.contains('hub-tree-dir-node')) {
+              // 默认折叠；点击展开/收起，icon 方向随之变化
+              const children = node.nextElementSibling;
+              const isOpen = children.classList.toggle('open');
+              node.classList.toggle('open', isOpen);
+            } else {
+              document.querySelectorAll('.hub-tree-file.active').forEach(el => el.classList.remove('active'));
+              node.classList.add('active');
+              loadSkillHubFile(path);
+            }
+          });
+
+          // 默认打开 SKILL.md，不存在则打开 README.md
+          const target = findPreferredFile(tree, ['skill.md', 'readme.md']) ||
+            (skill.entryFile && skill.entryFile !== 'index.html' ? skill.entryFile : null) ||
+            firstHubFilePath(tree);
+          if (target) {
+            const elm = root.querySelector('.hub-tree-file[data-path="' + window.CSS.escape(target).replace(/"/g, '\\"') + '"]');
+            if (elm) elm.classList.add('active');
+            loadSkillHubFile(target);
+          }
+        } catch (e) {
+          root.innerHTML = '<div class="hub-empty">加载失败</div>';
+        }
+      }
+
+      function findPreferredFile(nodes, names) {
+        for (const n of (nodes || [])) {
+          if (n.type === 'file' && names.includes((n.path || '').split('/').pop().toLowerCase())) return n.path;
+        }
+        for (const n of (nodes || [])) {
+          if (n.type === 'dir') {
+            const f = findPreferredFile(n.children, names);
+            if (f) return f;
+          }
+        }
+        return null;
+      }
+
+      function firstHubFilePath(nodes) {
+        for (const n of (nodes || [])) {
+          if (n.type === 'file') return n.path;
+          const f = firstHubFilePath(n.children);
+          if (f) return f;
+        }
+        return null;
+      }
+
+      async function loadSkillHubFile(path) {
+        const viewer = document.getElementById('hub-viewer');
+        if (!viewer) return;
+        viewer.innerHTML = '<div class="hub-loading">加载中…</div>';
+        try {
+          const url = skillHubFileUrl(path);
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error(resp.status);
+          const text = await resp.text();
+          const lower = path.toLowerCase();
+          if (/(\.md|\.markdown)$/.test(lower)) {
+            viewer.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = 'hub-md content';
+            try { div.innerHTML = marked.parse(text); } catch (err) { div.textContent = text; }
+            viewer.appendChild(div);
+            if (window.hljs) div.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+          } else if (/(\.(svg|png|jpe?g|gif|webp|bmp|ico))$/.test(lower)) {
+            viewer.innerHTML = '<div class="hub-img"><img src="' + escapeHtmlAttr(url) + '" alt="' + escapeHtmlAttr(path) + '"></div>';
+          } else {
+            viewer.innerHTML = `
+              <div class="hub-code">
+                <div class="hub-code-header">
+                  <span class="hub-code-title"><i class="fas fa-file-code"></i> ${escapeHtml(path)}</span>
+                  <button class="hub-copy-btn" type="button"><i class="far fa-copy"></i> 复制</button>
+                </div>
+                <div class="hub-code-body"><pre><code class="language-${escapeHtml(guessLanguage(path))}"></code></pre></div>
+              </div>`;
+            const codeEl = viewer.querySelector('code');
+            codeEl.textContent = text;
+            if (window.hljs) hljs.highlightElement(codeEl);
+            viewer.querySelector('.hub-copy-btn').addEventListener('click', () => copyText(text));
+          }
+        } catch (e) {
+          viewer.innerHTML = '<div class="hub-empty">无法加载文件</div>';
+        }
+      }
+
+      window.navigateTo = navigateTo;
+      window.filterCategory = filterCategory;
+      window.downloadSkillZip = downloadSkillZip;
+      window.copyInstallCmd = copyInstallCmd;
+      window.copyText = copyText;
+      window.copyCurrentCode = copyCurrentCode;
+
+      document.addEventListener('DOMContentLoaded', () => {
+        init();
+      });
+    </script>
+  </th:block>
+</html>

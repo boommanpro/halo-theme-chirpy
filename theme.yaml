@@ -20,3 +20,8 @@ spec:
   configMapName: "halo-theme-chirpy-configMap"
   version: 101.5.0
   require: ">=2.0.0"
+  customTemplates:
+    page:
+      - name: skill
+        description: Skill 中心
+        file: templates/skill.html
