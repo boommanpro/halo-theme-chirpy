@@ -1,6 +1,6 @@
 {
   "name": "halo-theme-chirpy",
-  "version": "101.5.0",
+  "version": "101.5.1",
   "description": "A minimal, responsive and feature-rich Halo theme for technical writing.",
   "scripts": {
     "build": "cross-env NODE_ENV=prod node mode.js && vite build",
